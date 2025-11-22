@@ -12,6 +12,7 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .route("/api/admin/kyc/:id/review", post(super::handlers::review_kyc))
         .route("/api/geo/location", post(super::handlers::update_location))
         .route("/api/geo/nearby", axum::routing::get(super::handlers::find_nearby))
+        .route("/api/subscriptions/upgrade", post(super::handlers::upgrade_subscription))
         .route("/ws", axum::routing::get(crate::api::ws::ws_handler))
         .with_state(state)
 }

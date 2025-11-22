@@ -13,6 +13,7 @@ use crate::application::{
     AuthResponse, LoginRequest, LoginUser, RegisterRequest, RegisterUser,
     GetUploadUrl, SubmitKyc, ReviewKyc, SendMessage,
     UpdateLocation, FindNearbyUsers,
+    UpgradeSubscription,
 };
 
 pub struct AppState {
@@ -24,6 +25,7 @@ pub struct AppState {
     pub send_message: Arc<SendMessage>,
     pub update_location: Arc<UpdateLocation>,
     pub find_nearby_users: Arc<FindNearbyUsers>,
+    pub upgrade_subscription: Arc<UpgradeSubscription>,
     pub tx: broadcast::Sender<String>,
 }
 

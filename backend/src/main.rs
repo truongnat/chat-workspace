@@ -1,6 +1,9 @@
 mod api;
 mod application;
         .expect("JWT_EXPIRATION must be a number");
+mod api;
+mod application;
+        .expect("JWT_EXPIRATION must be a number");
         
     // S3 Config
     let s3_endpoint = std::env::var("S3_ENDPOINT").expect("S3_ENDPOINT must be set");
