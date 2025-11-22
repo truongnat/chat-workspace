@@ -1,10 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'theme/app_theme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'core/theme/app_theme.dart';
 import 'router/app_router.dart';
+import 'features/auth/presentation/providers/auth_providers.dart';
+import 'features/settings/presentation/providers/theme_providers.dart';
 
-void main() {
-  runApp(const ProviderScope(child: MyApp()));
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize SharedPreferences
+  final sharedPreferences = await SharedPreferences.getInstance();
+  
+  runApp(
+    ProviderScope(
+      overrides: [
+        // Override SharedPreferences provider for Auth feature
+        sharedPreferencesProvider.overrideWithValue(sharedPreferences),
+        // Override SharedPreferences provider for Settings feature
+        sharedPreferencesProvider.overrideWithValue(sharedPreferences),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends ConsumerWidget {
@@ -13,6 +31,7 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
+    final currentTheme = ref.watch(currentThemeProvider);
 
     return MaterialApp.router(
       title: 'Secure Chat',
