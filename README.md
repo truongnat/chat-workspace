@@ -15,13 +15,16 @@ The backend is fully implemented, following Clean Architecture principles.
 - **Phase 6: Geo-location**: Nearby user discovery using PostGIS spatial queries.
 - **Phase 7: Jobs**: Background message cleanup (self-destruct).
 - **Phase 8: Subscriptions**: Premium tier management.
+- **Phase 9: Hardening**: OTP verification, production readiness (In Progress).
+- **Phase 10: E2EE**: Public key storage and exchange endpoints (Complete).
 
 ### Frontend (Flutter) - **IN PROGRESS** 🚧
-Integration with the backend has begun.
+Integration with the backend is well underway, with core security features implemented.
 
 - **Networking**: `ApiClient` with Dio interceptors for Auth.
 - **Real-time**: `WebSocketService` implementing the strict JSON protocol.
 - **Auth**: Remote data sources and repositories for Login/Register.
+- **Security**: **End-to-End Encryption (E2EE)** using `sodium_libs` (X25519 + XSalsa20-Poly1305).
 - **UI**: Comprehensive UI library and screens implemented (Auth, Chat, Video Call, Settings).
 
 ## 🛠️ Tech Stack
@@ -37,6 +40,7 @@ Integration with the backend has begun.
 - **Framework**: Flutter
 - **State Management**: Riverpod
 - **Networking**: Dio, WebSocketChannel
+- **Cryptography**: Libsodium (`sodium_libs`)
 - **Local Storage**: Flutter Secure Storage
 
 ## 🏃‍♂️ Getting Started
@@ -63,5 +67,10 @@ WebSocket messages follow a strict JSON format:
 ```
 **Events**: `SendMessage`, `WebRtcSignal`, `SystemEvent`.
 
-## 📄 License
+## � Security Architecture
+- **End-to-End Encryption**: Messages are encrypted on the device using **X25519** for key exchange and **XSalsa20-Poly1305** for encryption. The backend only stores encrypted blobs and public keys.
+- **Secure Storage**: Private keys and auth tokens are stored in the device's secure enclave (Keychain/Keystore) via `flutter_secure_storage`.
+- **Zero Knowledge**: The server cannot decrypt user messages.
+
+## �📄 License
 Proprietary.
