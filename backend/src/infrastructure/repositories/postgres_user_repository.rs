@@ -29,10 +29,10 @@ impl UserRepository for PostgresUserRepository {
 
         let row = sqlx::query!(
             r#"
-            INSERT INTO users (id, phone_number, password_hash, name, username, bio, avatar_url, is_verified, subscription_tier)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            INSERT INTO users (id, phone_number, password_hash, name, username, bio, avatar_url, is_verified, subscription_tier, public_key_x25519)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING id, phone_number, password_hash, name, username, bio, avatar_url, 
-                      is_verified, is_online, last_seen, subscription_tier, created_at, updated_at
+                      is_verified, is_online, last_seen, subscription_tier, created_at, updated_at, public_key_x25519
             "#,
             user.id,
             user.phone_number,
@@ -42,7 +42,8 @@ impl UserRepository for PostgresUserRepository {
             user.bio,
             user.avatar_url,
             user.is_verified,
-            subscription_tier
+            subscription_tier,
+            user.public_key
         )
         .fetch_one(&self.pool)
         .await
@@ -57,6 +58,7 @@ impl UserRepository for PostgresUserRepository {
             bio: row.bio,
             avatar_url: row.avatar_url,
             location: None,
+            public_key: row.public_key_x25519,
             is_verified: row.is_verified,
             is_online: row.is_online,
             last_seen: row.last_seen,
@@ -75,7 +77,8 @@ impl UserRepository for PostgresUserRepository {
             r#"
             SELECT id, phone_number, password_hash, name, username, bio, avatar_url,
                    is_verified, is_online, last_seen, subscription_tier, created_at, updated_at,
-                   ST_Y(location::geometry) as lat, ST_X(location::geometry) as lon
+                   ST_Y(location::geometry) as lat, ST_X(location::geometry) as lon,
+                   public_key_x25519
             FROM users
             WHERE id = $1
             "#,
@@ -94,6 +97,7 @@ impl UserRepository for PostgresUserRepository {
             bio: r.bio,
             avatar_url: r.avatar_url,
             location: r.lat.and_then(|lat| r.lon.map(|lon| (lat, lon))),
+            public_key: r.public_key_x25519,
             is_verified: r.is_verified,
             is_online: r.is_online,
             last_seen: r.last_seen,
@@ -112,7 +116,8 @@ impl UserRepository for PostgresUserRepository {
             r#"
             SELECT id, phone_number, password_hash, name, username, bio, avatar_url,
                    is_verified, is_online, last_seen, subscription_tier, created_at, updated_at,
-                   ST_Y(location::geometry) as lat, ST_X(location::geometry) as lon
+                   ST_Y(location::geometry) as lat, ST_X(location::geometry) as lon,
+                   public_key_x25519
             FROM users
             WHERE phone_number = $1
             "#,
@@ -131,6 +136,7 @@ impl UserRepository for PostgresUserRepository {
             bio: r.bio,
             avatar_url: r.avatar_url,
             location: r.lat.and_then(|lat| r.lon.map(|lon| (lat, lon))),
+            public_key: r.public_key_x25519,
             is_verified: r.is_verified,
             is_online: r.is_online,
             last_seen: r.last_seen,
@@ -149,7 +155,8 @@ impl UserRepository for PostgresUserRepository {
             r#"
             SELECT id, phone_number, password_hash, name, username, bio, avatar_url,
                    is_verified, is_online, last_seen, subscription_tier, created_at, updated_at,
-                   ST_Y(location::geometry) as lat, ST_X(location::geometry) as lon
+                   ST_Y(location::geometry) as lat, ST_X(location::geometry) as lon,
+                   public_key_x25519
             FROM users
             WHERE username = $1
             "#,
@@ -168,6 +175,7 @@ impl UserRepository for PostgresUserRepository {
             bio: r.bio,
             avatar_url: r.avatar_url,
             location: r.lat.and_then(|lat| r.lon.map(|lon| (lat, lon))),
+            public_key: r.public_key_x25519,
             is_verified: r.is_verified,
             is_online: r.is_online,
             last_seen: r.last_seen,
@@ -192,10 +200,10 @@ impl UserRepository for PostgresUserRepository {
             r#"
             UPDATE users
             SET name = $2, username = $3, bio = $4, avatar_url = $5, 
-                is_verified = $6, subscription_tier = $7
+                is_verified = $6, subscription_tier = $7, public_key_x25519 = $8
             WHERE id = $1
             RETURNING id, phone_number, password_hash, name, username, bio, avatar_url,
-                      is_verified, is_online, last_seen, subscription_tier, created_at, updated_at
+                      is_verified, is_online, last_seen, subscription_tier, created_at, updated_at, public_key_x25519
             "#,
             user.id,
             user.name,
@@ -203,7 +211,8 @@ impl UserRepository for PostgresUserRepository {
             user.bio,
             user.avatar_url,
             user.is_verified,
-            subscription_tier
+            subscription_tier,
+            user.public_key
         )
         .fetch_one(&self.pool)
         .await
@@ -218,6 +227,7 @@ impl UserRepository for PostgresUserRepository {
             bio: row.bio,
             avatar_url: row.avatar_url,
             location: None,
+            public_key: row.public_key_x25519,
             is_verified: row.is_verified,
             is_online: row.is_online,
             last_seen: row.last_seen,
@@ -271,6 +281,7 @@ impl UserRepository for PostgresUserRepository {
                 bio: r.bio,
                 avatar_url: r.avatar_url,
                 location: r.lat.and_then(|lat| r.lon.map(|lon| (lat, lon))),
+                public_key: r.public_key_x25519,
                 is_verified: r.is_verified,
                 is_online: r.is_online,
                 last_seen: r.last_seen,
@@ -312,6 +323,23 @@ impl UserRepository for PostgresUserRepository {
             "#,
             user_id,
             is_online
+        )
+        .execute(&self.pool)
+        .await
+        .map_err(|e| DomainError::InternalError(format!("Database error: {}", e)))?;
+
+        Ok(())
+    }
+
+    async fn update_public_key(&self, user_id: Uuid, public_key: String) -> DomainResult<()> {
+        sqlx::query!(
+            r#"
+            UPDATE users
+            SET public_key_x25519 = $2
+            WHERE id = $1
+            "#,
+            user_id,
+            public_key
         )
         .execute(&self.pool)
         .await

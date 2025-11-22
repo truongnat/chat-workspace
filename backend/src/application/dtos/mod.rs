@@ -5,6 +5,7 @@ pub mod webrtc_dto;
 pub mod geo_dto;
 pub mod subscription_dto;
 pub mod notification_dto;
+pub mod e2ee_dto;
 
 pub use auth_dto::{AuthResponse, LoginRequest, RegisterRequest, VerifyOtpRequest};
 pub use kyc_dto::{GetUploadUrlRequest, UploadUrlResponse, SubmitKycRequest, KycResponse, ReviewKycRequest};
@@ -13,3 +14,4 @@ pub use webrtc_dto::{WebRtcSignal, CallRequest, CallResponse, IceCandidate};
 pub use geo_dto::{UpdateLocationRequest, FindNearbyRequest, UserLocationResponse};
 pub use subscription_dto::{UpgradeSubscriptionRequest, SubscriptionResponse};
 pub use notification_dto::RegisterDeviceTokenRequest;
+pub use e2ee_dto::{UploadPublicKeyRequest, PublicKeyResponse};

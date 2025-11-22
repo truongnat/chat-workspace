@@ -4,13 +4,16 @@ import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_data_source.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../../../core/services/crypto_service.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
   final FlutterSecureStorage storage;
+  final CryptoService cryptoService;
 
   AuthRepositoryImpl({
     required this.remoteDataSource,
+    required this.cryptoService,
     this.storage = const FlutterSecureStorage(),
   });
 
@@ -35,6 +38,16 @@ class AuthRepositoryImpl implements AuthRepository {
         // Add other fields as necessary
       );
       
+      // Check if keys exist locally, if not generate and upload
+      // Note: In a real app, we might want to check if the server already has a public key
+      // and if so, we might need to recover the private key (which is complex) or regenerate (which invalidates old messages).
+      // For this MVP, we'll generate if missing locally and upload.
+      final existingPublicKey = await cryptoService.getMyPublicKey();
+      if (existingPublicKey == null) {
+        final newPublicKey = await cryptoService.generateAndSaveKeys();
+        await remoteDataSource.uploadPublicKey(newPublicKey);
+      }
+
       return Right(user);
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
@@ -69,6 +82,10 @@ class AuthRepositoryImpl implements AuthRepository {
         name: userJson['name'] ?? '',
       );
       
+      // Generate and upload keys
+      final newPublicKey = await cryptoService.generateAndSaveKeys();
+      await remoteDataSource.uploadPublicKey(newPublicKey);
+
       return Right(user);
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
@@ -86,5 +103,15 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, User>> getCurrentUser() async {
     // TODO: Implement get current user
     return Left(ServerFailure(message: "Not implemented"));
+  }
+
+  @override
+  Future<Either<Failure, String?>> getUserPublicKey(String userId) async {
+    try {
+      final key = await remoteDataSource.getPublicKey(userId);
+      return Right(key);
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
   }
 }

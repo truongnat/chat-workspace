@@ -25,6 +25,7 @@ dependencies:
   dio: ^5.4.0
   flutter_secure_storage: ^9.0.0
   web_socket_channel: ^2.4.0
+  sodium_libs: ^2.0.0
 
 dev_dependencies:
   flutter_test:

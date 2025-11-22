@@ -6,7 +6,8 @@ mod infrastructure;
 use std::sync::Arc;
 use api::{create_router, AppState};
 use application::{
-    LoginUser, RegisterUser, VerifyOtp, GetUploadUrl, SubmitKyc, ReviewKyc, 
+    LoginUser, RegisterUser, VerifyOtp, UploadPublicKey, GetPublicKey, 
+    GetUploadUrl, SubmitKyc, ReviewKyc, 
     SendMessage, UpdateLocation, FindNearbyUsers, UpgradeSubscription, RegisterDeviceToken
 };
 use infrastructure::{
@@ -70,6 +71,8 @@ async fn main() -> anyhow::Result<()> {
     let register_user = Arc::new(RegisterUser::new(user_repo.clone(), auth_service.clone()));
     let login_user = Arc::new(LoginUser::new(user_repo.clone(), auth_service.clone()));
     let verify_otp = Arc::new(VerifyOtp::new(auth_service.clone()));
+    let upload_public_key = Arc::new(UploadPublicKey::new(user_repo.clone()));
+    let get_public_key = Arc::new(GetPublicKey::new(user_repo.clone()));
     
     let get_upload_url = Arc::new(GetUploadUrl::new(s3_service.clone()));
     let submit_kyc = Arc::new(SubmitKyc::new(kyc_repo.clone()));
@@ -91,6 +94,8 @@ async fn main() -> anyhow::Result<()> {
         register_user,
         login_user,
         verify_otp,
+        upload_public_key,
+        get_public_key,
         get_upload_url,
         submit_kyc,
         review_kyc,

@@ -6,6 +6,8 @@ abstract class AuthRemoteDataSource {
   Future<Map<String, dynamic>> login(String phone, String password);
   Future<void> verifyOtp(String phone, String otp);
   Future<Map<String, dynamic>> register(String phone, String password, String name);
+  Future<void> uploadPublicKey(String publicKey);
+  Future<String?> getPublicKey(String userId);
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -57,6 +59,32 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       );
       return response.data;
     } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  @override
+  Future<void> uploadPublicKey(String publicKey) async {
+    try {
+      await apiClient.dio.post(
+        '/keys/upload',
+        data: {
+          'public_key': publicKey,
+        },
+      );
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  @override
+  Future<String?> getPublicKey(String userId) async {
+    try {
+      final response = await apiClient.dio.get('/users/$userId/key');
+      return response.data['public_key'];
+    } on DioException catch (e) {
+      // If 404, maybe user hasn't uploaded key yet
+      if (e.response?.statusCode == 404) return null;
       throw _handleError(e);
     }
   }

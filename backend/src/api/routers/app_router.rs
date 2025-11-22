@@ -8,6 +8,8 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .route("/api/auth/register", post(super::handlers::register))
         .route("/api/auth/login", post(super::handlers::login))
         .route("/api/auth/verify-otp", post(super::handlers::verify_otp))
+        .route("/api/keys/upload", post(super::handlers::upload_public_key))
+        .route("/api/users/:id/key", axum::routing::get(super::handlers::get_public_key))
         .route("/api/kyc/upload-url", post(super::handlers::get_upload_url))
         .route("/api/kyc/submit", post(super::handlers::submit_kyc))
         .route("/api/admin/kyc/:id/review", post(super::handlers::review_kyc))

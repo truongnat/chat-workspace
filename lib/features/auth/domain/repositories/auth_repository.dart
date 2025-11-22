@@ -13,5 +13,7 @@ abstract class AuthRepository {
     String? avatarUrl,
   });
   Future<Either<Failure, User>> getCurrentUser();
+  Future<Either<Failure, User>> getCurrentUser();
   Future<Either<Failure, void>> logout();
+  Future<Either<Failure, String?>> getUserPublicKey(String userId);
 }

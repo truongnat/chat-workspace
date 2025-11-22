@@ -13,5 +13,7 @@ pub trait UserRepository: Send + Sync {
     async fn delete(&self, id: Uuid) -> DomainResult<()>;
     async fn find_nearby(&self, lat: f64, lon: f64, radius_km: f64) -> DomainResult<Vec<User>>;
     async fn update_location(&self, user_id: Uuid, lat: f64, lon: f64) -> DomainResult<()>;
+    async fn update_location(&self, user_id: Uuid, lat: f64, lon: f64) -> DomainResult<()>;
     async fn update_online_status(&self, user_id: Uuid, is_online: bool) -> DomainResult<()>;
+    async fn update_public_key(&self, user_id: Uuid, public_key: String) -> DomainResult<()>;
 }
