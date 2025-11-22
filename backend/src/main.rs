@@ -1,28 +1,5 @@
 mod api;
 mod application;
-mod domain;
-mod infrastructure;
-
-use std::sync::Arc;
-
-use api::{create_router, AppState};
-use application::{LoginUser, RegisterUser, GetUploadUrl, SubmitKyc, ReviewKyc, SendMessage};
-use infrastructure::{AuthServiceImpl, Database, PostgresUserRepository, PostgresKycRepository, PostgresMessageRepository, S3Service};
-use tokio::sync::broadcast;
-
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    // Initialize tracing
-    tracing_subscriber::fmt::init();
-
-    // Load environment variables
-    dotenvy::dotenv().ok();
-
-    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let jwt_secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
-    let jwt_expiration: i64 = std::env::var("JWT_EXPIRATION")
-        .unwrap_or_else(|_| "3600".to_string())
-        .parse()
         .expect("JWT_EXPIRATION must be a number");
         
     // S3 Config
