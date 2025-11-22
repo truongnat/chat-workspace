@@ -6,8 +6,9 @@ mod infrastructure;
 use std::sync::Arc;
 
 use api::{create_router, AppState};
-use application::{LoginUser, RegisterUser, GetUploadUrl, SubmitKyc, ReviewKyc};
-use infrastructure::{AuthServiceImpl, Database, PostgresUserRepository, PostgresKycRepository, S3Service};
+use application::{LoginUser, RegisterUser, GetUploadUrl, SubmitKyc, ReviewKyc, SendMessage};
+use infrastructure::{AuthServiceImpl, Database, PostgresUserRepository, PostgresKycRepository, PostgresMessageRepository, S3Service};
+use tokio::sync::broadcast;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -38,6 +39,7 @@ async fn main() -> anyhow::Result<()> {
     // Initialize repositories
     let user_repo = Arc::new(PostgresUserRepository::new(db.pool().clone()));
     let kyc_repo = Arc::new(PostgresKycRepository::new(db.pool().clone()));
+    let message_repo = Arc::new(PostgresMessageRepository::new(db.pool().clone()));
 
     // Initialize services
     let auth_service = Arc::new(AuthServiceImpl::new(jwt_secret, jwt_expiration));
@@ -56,6 +58,11 @@ async fn main() -> anyhow::Result<()> {
     let get_upload_url = Arc::new(GetUploadUrl::new(s3_service.clone()));
     let submit_kyc = Arc::new(SubmitKyc::new(kyc_repo.clone()));
     let review_kyc = Arc::new(ReviewKyc::new(kyc_repo.clone(), user_repo.clone()));
+    
+    let send_message = Arc::new(SendMessage::new(message_repo.clone()));
+
+    // Initialize broadcast channel for WebSockets
+    let (tx, _rx) = broadcast::channel(100);
 
     // Create app state
     let app_state = Arc::new(AppState {
@@ -64,6 +71,8 @@ async fn main() -> anyhow::Result<()> {
         get_upload_url,
         submit_kyc,
         review_kyc,
+        send_message,
+        tx,
     });
 
     // Create router

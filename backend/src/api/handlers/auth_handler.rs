@@ -8,9 +8,10 @@ use serde_json::json;
 use std::sync::Arc;
 use validator::Validate;
 
+use tokio::sync::broadcast;
 use crate::application::{
     AuthResponse, LoginRequest, LoginUser, RegisterRequest, RegisterUser,
-    GetUploadUrl, SubmitKyc, ReviewKyc,
+    GetUploadUrl, SubmitKyc, ReviewKyc, SendMessage,
 };
 
 pub struct AppState {
@@ -19,6 +20,8 @@ pub struct AppState {
     pub get_upload_url: Arc<GetUploadUrl>,
     pub submit_kyc: Arc<SubmitKyc>,
     pub review_kyc: Arc<ReviewKyc>,
+    pub send_message: Arc<SendMessage>,
+    pub tx: broadcast::Sender<String>,
 }
 
 pub async fn register(
