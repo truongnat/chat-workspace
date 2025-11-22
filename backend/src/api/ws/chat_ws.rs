@@ -33,47 +33,6 @@ pub async fn ws_handler(
 async fn handle_socket(socket: WebSocket, state: Arc<AppState>, user_id: String) {
     let (mut sender, mut receiver) = socket.split();
     let mut rx = state.tx.subscribe();
-
-    // Spawn a task to forward broadcast messages to this client
-    let mut send_task = tokio::spawn(async move {
-        while let Ok(msg) = rx.recv().await {
-            // In a real app, filter messages for this user/conversation
-            if sender.send(Message::Text(msg)).await.is_err() {
-                break;
-            }
-        }
-    });
-
-    // Handle incoming messages from this client
-    let mut recv_task = tokio::spawn(async move {
-        while let Some(Ok(msg)) = receiver.next().await {
-            if let Message::Text(text) = msg {
-                // Parse message
-                if let Ok(ws_msg) = serde_json::from_str::<WebSocketMessage>(&text) {
-                    match ws_msg.event.as_str() {
-                        "SendMessage" => {
-                            if let Ok(req) = serde_json::from_value::<SendMessageRequest>(ws_msg.data) {
-                                // Persist message
-                                if let Ok(saved_msg) = state.send_message.execute(
-                                    Uuid::parse_str(&user_id).unwrap_or_default(),
-                                    req.conversation_id,
-                                    req.content,
-                                    req.message_type,
-                                    req.reply_to_id,
-                                    req.self_destruct_in_seconds
-                                ).await {
-                                    // Broadcast to others via Redis/Internal Channel
-                                    // For now, using internal broadcast channel
-                                    let _ = state.tx.send(serde_json::to_string(&saved_msg).unwrap_or_default());
-                                }
-                            }
-                        },
-                        "SystemEvent" => {
-                            // Handle anti-screenshot, etc.
-                            let _ = state.tx.send(text);
-                        },
-                        _ => {}
-                    }
                 }
             }
         }
