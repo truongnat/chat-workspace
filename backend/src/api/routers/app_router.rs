@@ -10,6 +10,8 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .route("/api/kyc/upload-url", post(super::handlers::get_upload_url))
         .route("/api/kyc/submit", post(super::handlers::submit_kyc))
         .route("/api/admin/kyc/:id/review", post(super::handlers::review_kyc))
+        .route("/api/geo/location", post(super::handlers::update_location))
+        .route("/api/geo/nearby", axum::routing::get(super::handlers::find_nearby))
         .route("/ws", axum::routing::get(crate::api::ws::ws_handler))
         .with_state(state)
 }

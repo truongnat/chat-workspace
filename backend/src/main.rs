@@ -45,39 +45,6 @@ async fn main() -> anyhow::Result<()> {
     let auth_service = Arc::new(AuthServiceImpl::new(jwt_secret, jwt_expiration));
     let s3_service = Arc::new(S3Service::new(
         &s3_endpoint, 
-        &s3_bucket, 
-        &s3_access_key, 
-        &s3_secret_key, 
-        &s3_region
-    ).await?);
-
-    // Initialize use cases
-    let register_user = Arc::new(RegisterUser::new(user_repo.clone(), auth_service.clone()));
-    let login_user = Arc::new(LoginUser::new(user_repo.clone(), auth_service.clone()));
-    
-    let get_upload_url = Arc::new(GetUploadUrl::new(s3_service.clone()));
-    let submit_kyc = Arc::new(SubmitKyc::new(kyc_repo.clone()));
-    let review_kyc = Arc::new(ReviewKyc::new(kyc_repo.clone(), user_repo.clone()));
-    
-    let send_message = Arc::new(SendMessage::new(message_repo.clone()));
-
-    // Initialize broadcast channel for WebSockets
-    let (tx, _rx) = broadcast::channel(100);
-
-    // Create app state
-    let app_state = Arc::new(AppState {
-        register_user,
-        login_user,
-        get_upload_url,
-        submit_kyc,
-        review_kyc,
-        send_message,
-        tx,
-    });
-
-    // Create router
-    let app = create_router(app_state);
-
     // Start server
     let addr = "0.0.0.0:8080";
     tracing::info!("Server listening on {}", addr);

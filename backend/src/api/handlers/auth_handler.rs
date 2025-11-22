@@ -12,6 +12,7 @@ use tokio::sync::broadcast;
 use crate::application::{
     AuthResponse, LoginRequest, LoginUser, RegisterRequest, RegisterUser,
     GetUploadUrl, SubmitKyc, ReviewKyc, SendMessage,
+    UpdateLocation, FindNearbyUsers,
 };
 
 pub struct AppState {
@@ -21,6 +22,8 @@ pub struct AppState {
     pub submit_kyc: Arc<SubmitKyc>,
     pub review_kyc: Arc<ReviewKyc>,
     pub send_message: Arc<SendMessage>,
+    pub update_location: Arc<UpdateLocation>,
+    pub find_nearby_users: Arc<FindNearbyUsers>,
     pub tx: broadcast::Sender<String>,
 }
 
