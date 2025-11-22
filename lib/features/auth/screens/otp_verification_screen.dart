@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pinput/pinput.dart';
 import '../../../theme/app_colors.dart';
 import '../../../widgets/common_button.dart';
-import '../../../widgets/common_input.dart';
 import '../../../widgets/common_app_bar.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
@@ -34,6 +34,37 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final defaultPinTheme = PinTheme(
+      width: 60,
+      height: 60,
+      textStyle: const TextStyle(
+        fontSize: 24,
+        color: AppColors.textPrimary,
+        fontWeight: FontWeight.w600,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.transparent),
+      ),
+    );
+
+    final focusedPinTheme = defaultPinTheme.copyWith(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.electricBlue, width: 2),
+      ),
+    );
+
+    final submittedPinTheme = defaultPinTheme.copyWith(
+      decoration: BoxDecoration(
+        gradient: AppColors.primaryGradient.scale(0.2),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.electricBlue, width: 1),
+      ),
+    );
+
     return Scaffold(
       appBar: const CustomAppBar(title: ''),
       body: Padding(
@@ -51,11 +82,24 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 32),
-            CustomTextField(
-              hintText: '000000',
-              controller: _otpController,
-              keyboardType: TextInputType.number,
-              prefixIcon: const Icon(Icons.lock_clock_outlined),
+            Center(
+              child: Pinput(
+                controller: _otpController,
+                length: 6,
+                defaultPinTheme: defaultPinTheme,
+                focusedPinTheme: focusedPinTheme,
+                submittedPinTheme: submittedPinTheme,
+                onCompleted: (pin) => _onVerify(),
+                showCursor: true,
+                cursor: Container(
+                  width: 2,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    gradient: AppColors.primaryGradient,
+                    borderRadius: BorderRadius.circular(1),
+                  ),
+                ),
+              ),
             ),
             const SizedBox(height: 16),
             Center(
