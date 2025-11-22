@@ -28,6 +28,7 @@ pub struct MessageResponse {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct WebSocketMessage {
-    pub event: String,
-    pub data: serde_json::Value,
+    #[serde(rename = "type")]
+    pub event_type: String,
+    pub payload: serde_json::Value,
 }

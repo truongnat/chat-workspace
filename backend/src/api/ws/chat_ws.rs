@@ -33,6 +33,76 @@ pub async fn ws_handler(
 async fn handle_socket(socket: WebSocket, state: Arc<AppState>, user_id: String) {
     let (mut sender, mut receiver) = socket.split();
     let mut rx = state.tx.subscribe();
+
+    // Spawn a task to send messages to the client
+    let mut send_task = tokio::spawn(async move {
+        while let Ok(msg) = rx.recv().await {
+            // In a real app, we would filter messages based on recipient
+            // For this MVP, we send all messages to all connected clients
+            if sender.send(Message::Text(msg)).await.is_err() {
+                break;
+            }
+        }
+    });
+
+    // Spawn a task to receive messages from the client
+    let mut recv_task = tokio::spawn(async move {
+        while let Some(Ok(msg)) = receiver.next().await {
+            match msg {
+                Message::Text(text) => {
+                // Parse message
+                if let Ok(ws_msg) = serde_json::from_str::<WebSocketMessage>(&text) {
+                    match ws_msg.event_type.as_str() {
+                        "SendMessage" => {
+                            if let Ok(req) = serde_json::from_value::<SendMessageRequest>(ws_msg.payload) {
+                                // Persist message
+                                if let Ok(saved_msg) = state.send_message.execute(
+                                    Uuid::parse_str(&user_id).unwrap_or_default(),
+                                    req.conversation_id,
+                                    req.content,
+                                    req.message_type,
+                                    req.reply_to_id,
+                                    req.self_destruct_in_seconds
+                                ).await {
+                                    // Broadcast to others via Redis/Internal Channel
+                                    // For now, using internal broadcast channel
+                                    let _ = state.tx.send(serde_json::to_string(&saved_msg).unwrap_or_default());
+                                }
+                            }
+                        },
+                        "WebRtcSignal" => {
+                            // Relay WebRTC signaling messages directly to target user
+                            // In a real app, we would look up the specific connection for target_user_id
+                            // For this MVP with broadcast channel, we broadcast to everyone and clients filter
+                            if let Ok(signal) = serde_json::from_value::<WebRtcSignal>(ws_msg.payload) {
+                                // Wrap it back in a WebSocketMessage to send out
+                                let relay_msg = WebSocketMessage {
+                                    event_type: "WebRtcSignal".to_string(),
+                                    payload: serde_json::to_value(signal).unwrap_or_default(),
+                                };
+                                let _ = state.tx.send(serde_json::to_string(&relay_msg).unwrap_or_default());
+                            }
+                        },
+                        "SystemEvent" => {
+                            // Handle anti-screenshot, etc.
+                            let _ = state.tx.send(text);
+                        },
+                        _ => {}
+                    }
+                }
+                },
+                Message::Binary(_) => {
+                    // Handle binary messages if needed
+                },
+                Message::Ping(_) => {
+                    // Respond to pings
+                },
+                Message::Pong(_) => {
+                    // Handle pongs
+                },
+                Message::Close(_) => {
+                    // Client disconnected
+                    break;
                 }
             }
         }

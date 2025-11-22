@@ -2,88 +2,89 @@ import 'package:dartz/dartz.dart';
 import '../../../../core/error/failures.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
-import '../datasources/auth_local_datasource.dart';
-import '../datasources/auth_remote_datasource.dart';
+import '../datasources/auth_remote_data_source.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
-  final AuthLocalDataSource localDataSource;
+  final FlutterSecureStorage storage;
 
   AuthRepositoryImpl({
     required this.remoteDataSource,
-    required this.localDataSource,
+    this.storage = const FlutterSecureStorage(),
   });
 
   @override
-  Future<Either<Failure, void>> sendOtp(String phoneNumber) async {
+  Future<Either<Failure, User>> login(String phone, String password) async {
     try {
-      await remoteDataSource.sendOtp(phoneNumber);
+      final response = await remoteDataSource.login(phone, password);
+      
+      // Cache token
+      final token = response['token'];
+      if (token != null) {
+        await storage.write(key: 'auth_token', value: token);
+      }
+
+      // Map response to User entity
+      // Assuming response['user'] contains user data
+      final userJson = response['user'];
+      final user = User(
+        id: userJson['id'],
+        phoneNumber: userJson['phone_number'],
+        name: userJson['name'] ?? '',
+        // Add other fields as necessary
+      );
+      
+      return Right(user);
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> verifyOtp(String phone, String otp) async {
+    try {
+      await remoteDataSource.verifyOtp(phone, otp);
       return const Right(null);
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return Left(ServerFailure(message: e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, User>> verifyOtp(
-    String phoneNumber,
-    String otp,
-  ) async {
+  Future<Either<Failure, User>> register(String phone, String password, String name) async {
     try {
-      final user = await remoteDataSource.verifyOtp(phoneNumber, otp);
-      await localDataSource.cacheUser(user);
-      return Right(user);
-    } catch (e) {
-      return Left(AuthenticationFailure(e.toString()));
-    }
-  }
-
-  @override
-  Future<Either<Failure, User>> createProfile({
-    required String userId,
-    required String name,
-    String? username,
-    String? bio,
-    String? avatarUrl,
-  }) async {
-    try {
-      final user = await remoteDataSource.createProfile(
-        userId: userId,
-        name: name,
-        username: username,
-        bio: bio,
-        avatarUrl: avatarUrl,
-      );
-      await localDataSource.cacheUser(user);
-      return Right(user);
-    } catch (e) {
-      return Left(ServerFailure(e.toString()));
-    }
-  }
-
-  @override
-  Future<Either<Failure, User>> getCurrentUser() async {
-    try {
-      final user = await localDataSource.getCachedUser();
-      return Right(user);
-    } catch (e) {
-      try {
-        final user = await remoteDataSource.getCurrentUser();
-        await localDataSource.cacheUser(user);
-        return Right(user);
-      } catch (e) {
-        return Left(AuthenticationFailure('Not authenticated'));
+      final response = await remoteDataSource.register(phone, password, name);
+      
+      // Cache token
+      final token = response['token'];
+      if (token != null) {
+        await storage.write(key: 'auth_token', value: token);
       }
+
+      final userJson = response['user'];
+      final user = User(
+        id: userJson['id'],
+        phoneNumber: userJson['phone_number'],
+        name: userJson['name'] ?? '',
+      );
+      
+      return Right(user);
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
     }
   }
-
+  
+  // Implement other methods...
   @override
   Future<Either<Failure, void>> logout() async {
-    try {
-      await localDataSource.clearCache();
-      return const Right(null);
-    } catch (e) {
-      return Left(CacheFailure(e.toString()));
-    }
+    await storage.delete(key: 'auth_token');
+    return const Right(null);
+  }
+  
+  @override
+  Future<Either<Failure, User>> getCurrentUser() async {
+    // TODO: Implement get current user
+    return Left(ServerFailure(message: "Not implemented"));
   }
 }
