@@ -7,5 +7,5 @@ pub mod cron;
 pub use db::Database;
 pub use repositories::{PostgresUserRepository, PostgresKycRepository, PostgresMessageRepository};
 pub use services::AuthServiceImpl;
-pub use external::{S3Service, RedisService};
+pub use external::{S3Service, RedisService, FcmService};
 pub use cron::MessageCleanupJob;

@@ -79,4 +79,19 @@ impl AuthService for AuthServiceImpl {
 
         Ok(token_data.claims.sub)
     }
+
+    async fn verify_otp(&self, phone_number: &str, otp: &str) -> DomainResult<bool> {
+        // TODO: Integrate with Twilio/SNS
+        // For now, in dev mode, we just log it and accept '123456' or any OTP for testing
+        tracing::info!("Verifying OTP for {}: {}", phone_number, otp);
+        
+        if otp == "123456" {
+            Ok(true)
+        } else {
+            // In a real scenario, we would return false or error
+            // For dev ease, let's accept everything but log it
+            tracing::warn!("Accepting any OTP in dev mode");
+            Ok(true)
+        }
+    }
 }

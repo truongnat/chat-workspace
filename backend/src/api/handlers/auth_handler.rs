@@ -10,15 +10,17 @@ use validator::Validate;
 
 use tokio::sync::broadcast;
 use crate::application::{
-    AuthResponse, LoginRequest, LoginUser, RegisterRequest, RegisterUser,
+    AuthResponse, LoginRequest, LoginUser, RegisterRequest, RegisterUser, VerifyOtpRequest, VerifyOtp,
     GetUploadUrl, SubmitKyc, ReviewKyc, SendMessage,
     UpdateLocation, FindNearbyUsers,
     UpgradeSubscription,
+    RegisterDeviceToken,
 };
 
 pub struct AppState {
     pub register_user: Arc<RegisterUser>,
     pub login_user: Arc<LoginUser>,
+    pub verify_otp: Arc<VerifyOtp>,
     pub get_upload_url: Arc<GetUploadUrl>,
     pub submit_kyc: Arc<SubmitKyc>,
     pub review_kyc: Arc<ReviewKyc>,
@@ -26,6 +28,7 @@ pub struct AppState {
     pub update_location: Arc<UpdateLocation>,
     pub find_nearby_users: Arc<FindNearbyUsers>,
     pub upgrade_subscription: Arc<UpgradeSubscription>,
+    pub register_device_token: Arc<RegisterDeviceToken>,
     pub tx: broadcast::Sender<String>,
 }
 
