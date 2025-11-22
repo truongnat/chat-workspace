@@ -1,3 +1,5 @@
 pub mod auth_dto;
+pub mod kyc_dto;
 
 pub use auth_dto::{AuthResponse, LoginRequest, RegisterRequest, VerifyOtpRequest};
+pub use kyc_dto::{GetUploadUrlRequest, UploadUrlResponse, SubmitKycRequest, KycResponse, ReviewKycRequest};

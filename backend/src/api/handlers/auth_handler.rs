@@ -8,11 +8,17 @@ use serde_json::json;
 use std::sync::Arc;
 use validator::Validate;
 
-use crate::application::{AuthResponse, LoginRequest, LoginUser, RegisterRequest, RegisterUser};
+use crate::application::{
+    AuthResponse, LoginRequest, LoginUser, RegisterRequest, RegisterUser,
+    GetUploadUrl, SubmitKyc, ReviewKyc,
+};
 
 pub struct AppState {
     pub register_user: Arc<RegisterUser>,
     pub login_user: Arc<LoginUser>,
+    pub get_upload_url: Arc<GetUploadUrl>,
+    pub submit_kyc: Arc<SubmitKyc>,
+    pub review_kyc: Arc<ReviewKyc>,
 }
 
 pub async fn register(
