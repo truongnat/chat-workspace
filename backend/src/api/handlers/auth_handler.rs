@@ -3,7 +3,9 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
     Json,
+    Extension,
 };
+use crate::api::middleware::auth_middleware::CurrentUser;
 use serde_json::json;
 use std::sync::Arc;
 use validator::Validate;
@@ -85,12 +87,12 @@ pub async fn verify_otp(
 
 pub async fn upload_public_key(
     State(state): State<Arc<AppState>>,
+    Extension(current_user): Extension<CurrentUser>,
     Json(payload): Json<UploadPublicKeyRequest>,
 ) -> Result<StatusCode, AppError> {
     payload.validate()?;
     
-    // Mock user ID (TODO: Extract from JWT)
-    let user_id = uuid::Uuid::new_v4();
+    let user_id = current_user.id;
 
     state
         .upload_public_key

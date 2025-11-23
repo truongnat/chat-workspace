@@ -63,9 +63,8 @@ async fn main() -> anyhow::Result<()> {
     let redis_service = Arc::new(RedisService::new(&redis_url).await?); // Note: Redis service not fully used yet but initialized
     
     // Initialize Blockchain Service
-    // TODO: Move RPC URL to env
-    let rpc_url = "https://rpc.ankr.com/eth"; 
-    let blockchain_service = Arc::new(EvmBlockchainService::new(rpc_url)?);
+    let rpc_url = std::env::var("RPC_URL").expect("RPC_URL must be set");
+    let blockchain_service = Arc::new(EvmBlockchainService::new(&rpc_url)?);
 
     // Initialize background jobs
     let cleanup_job = MessageCleanupJob::new(message_repo.clone());

@@ -1,6 +1,7 @@
 pub mod handlers;
 pub mod routers;
 pub mod ws;
+pub mod middleware;
 
 pub use handlers::AppState;
 pub use routers::create_router;

@@ -1,5 +1,4 @@
-import 'package:web3dart/web3dart.dart';
-import 'package:http/http.dart';
+import '../../../../core/config/app_config.dart';
 
 abstract class Web3RemoteDataSource {
   Future<double> getBalance(String address);
@@ -8,11 +7,8 @@ abstract class Web3RemoteDataSource {
 class Web3RemoteDataSourceImpl implements Web3RemoteDataSource {
   final Web3Client _client;
 
-  // TODO: Move RPC URL to configuration/env
-  static const String _rpcUrl = 'https://rpc.ankr.com/eth'; 
-
   Web3RemoteDataSourceImpl({Web3Client? client})
-      : _client = client ?? Web3Client(_rpcUrl, Client());
+      : _client = client ?? Web3Client(AppConfig.rpcUrl, Client());
 
   @override
   Future<double> getBalance(String address) async {

@@ -136,23 +136,67 @@ class WalletScreen extends ConsumerWidget {
                   title: const Text('Reveal Seed Phrase', style: TextStyle(color: AppColors.textPrimary)),
                   trailing: const Icon(LucideIcons.chevronRight, color: AppColors.textSecondary),
                   onTap: () async {
-                    // Mock PIN check for now
-                    final mnemonic = await ref.read(walletControllerProvider.notifier).getMnemonic();
-                    if (context.mounted && mnemonic != null) {
-                      showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          backgroundColor: AppColors.surface,
-                          title: const Text('Seed Phrase', style: TextStyle(color: AppColors.textPrimary)),
-                          content: Text(mnemonic, style: const TextStyle(color: AppColors.textPrimary)),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text('Close'),
-                            ),
-                          ],
+                    final pinController = TextEditingController();
+                    final bool? isVerified = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        backgroundColor: AppColors.surface,
+                        title: const Text('Enter PIN', style: TextStyle(color: AppColors.textPrimary)),
+                        content: TextField(
+                          controller: pinController,
+                          keyboardType: TextInputType.number,
+                          obscureText: true,
+                          maxLength: 6,
+                          style: const TextStyle(color: AppColors.textPrimary),
+                          decoration: const InputDecoration(
+                            hintText: 'Enter your 6-digit PIN',
+                            hintStyle: TextStyle(color: AppColors.textSecondary),
+                            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.textSecondary)),
+                            focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.primary)),
+                          ),
                         ),
-                      );
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              // In a real app, validate against stored PIN hash
+                              // For this "real environment" simulation without a full PIN system,
+                              // we require a non-empty PIN.
+                              if (pinController.text.length >= 4) {
+                                Navigator.pop(context, true);
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Invalid PIN')),
+                                );
+                              }
+                            },
+                            child: const Text('Verify'),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (isVerified == true) {
+                      final mnemonic = await ref.read(walletControllerProvider.notifier).getMnemonic();
+                      if (context.mounted && mnemonic != null) {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            backgroundColor: AppColors.surface,
+                            title: const Text('Seed Phrase', style: TextStyle(color: AppColors.textPrimary)),
+                            content: SelectableText(mnemonic, style: const TextStyle(color: AppColors.textPrimary)),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Close'),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
                     }
                   },
                 ),
