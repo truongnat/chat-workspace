@@ -1,6 +1,7 @@
 use axum::{
-    extract::{State, Json},
+    extract::{State, Json, Extension},
 };
+use crate::api::middleware::auth_middleware::CurrentUser;
 use std::sync::Arc;
 use uuid::Uuid;
 use validator::Validate;
@@ -11,17 +12,14 @@ use crate::application::{
 };
 use crate::api::handlers::{AppError, AppState};
 
-// TODO: Extract user ID from JWT
-// For now, mock user ID
-
 pub async fn upgrade_subscription(
     State(state): State<Arc<AppState>>,
+    Extension(current_user): Extension<CurrentUser>,
     Json(payload): Json<UpgradeSubscriptionRequest>,
 ) -> Result<Json<SubscriptionResponse>, AppError> {
     payload.validate()?;
     
-    // Mock user ID
-    let user_id = Uuid::new_v4();
+    let user_id = current_user.id;
 
     let response = state
         .upgrade_subscription

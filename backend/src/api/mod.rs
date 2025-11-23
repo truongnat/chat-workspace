@@ -1,5 +1,6 @@
 pub mod handlers;
 pub mod routers;
+pub mod error;
 pub mod ws;
 pub mod middleware;
 

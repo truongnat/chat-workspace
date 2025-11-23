@@ -9,6 +9,7 @@ use crate::api::middleware::auth_middleware::CurrentUser;
 use serde_json::json;
 use std::sync::Arc;
 use validator::Validate;
+use crate::api::error::AppError;
 
 use tokio::sync::broadcast;
 use crate::application::{
@@ -114,25 +115,4 @@ pub async fn get_public_key(
     Ok(Json(PublicKeyResponse { public_key }))
 }
 
-// Error handling
-pub struct AppError(anyhow::Error);
 
-impl IntoResponse for AppError {
-    fn into_response(self) -> Response {
-        let message = self.0.to_string();
-        let body = Json(json!({
-            "error": message
-        }));
-
-        (StatusCode::INTERNAL_SERVER_ERROR, body).into_response()
-    }
-}
-
-impl<E> From<E> for AppError
-where
-    E: Into<anyhow::Error>,
-{
-    fn from(err: E) -> Self {
-        Self(err.into())
-    }
-}

@@ -7,16 +7,15 @@ use serde::Deserialize;
 use std::sync::Arc;
 use tokio::sync::broadcast;
 use uuid::Uuid;
+use jsonwebtoken::{decode, DecodingKey, Validation};
 
 use crate::api::handlers::AppState;
 use crate::application::{WebSocketMessage, SendMessageRequest};
+use crate::api::middleware::auth_middleware::Claims;
 
 #[derive(Deserialize)]
 pub struct WsParams {
     token: String,
-    // In a real app, we verify the token here or in middleware
-    // For now, we'll accept a user_id for testing if token is mock
-    user_id: Option<String>, 
 }
 
 pub async fn ws_handler(
@@ -24,8 +23,25 @@ pub async fn ws_handler(
     State(state): State<Arc<AppState>>,
     Query(params): Query<WsParams>,
 ) -> impl IntoResponse {
-    // TODO: Verify JWT token here
-    let user_id = params.user_id.unwrap_or_else(|| Uuid::new_v4().to_string());
+    // Verify JWT token
+    let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "secret".to_string());
+    let token_data = match decode::<Claims>(
+        &params.token,
+        &DecodingKey::from_secret(secret.as_ref()),
+        &Validation::default(),
+    ) {
+        Ok(data) => data,
+        Err(_) => {
+            // Return 401 Unauthorized if token is invalid
+            return axum::http::Response::builder()
+                .status(401)
+                .body(axum::body::Body::from("Unauthorized"))
+                .unwrap()
+                .into_response();
+        }
+    };
+
+    let user_id = token_data.claims.sub;
     
     ws.on_upgrade(move |socket| handle_socket(socket, state, user_id))
 }

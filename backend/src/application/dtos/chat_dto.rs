@@ -23,6 +23,7 @@ pub struct MessageResponse {
     pub content: String,
     pub message_type: String,
     pub created_at: DateTime<Utc>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub self_destruct_at: Option<DateTime<Utc>>,
 }
 

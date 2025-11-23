@@ -16,6 +16,7 @@ use infrastructure::{
     EvmBlockchainService
 };
 use tokio::sync::broadcast;
+use anyhow::Context;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -25,22 +26,22 @@ async fn main() -> anyhow::Result<()> {
     // Load environment variables
     dotenvy::dotenv().ok();
 
-    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let jwt_secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
+    let database_url = std::env::var("DATABASE_URL").context("DATABASE_URL must be set")?;
+    let jwt_secret = std::env::var("JWT_SECRET").context("JWT_SECRET must be set")?;
     let jwt_expiration: i64 = std::env::var("JWT_EXPIRATION")
         .unwrap_or_else(|_| "3600".to_string())
         .parse()
-        .expect("JWT_EXPIRATION must be a number");
+        .context("JWT_EXPIRATION must be a number")?;
         
     // S3 Config
-    let s3_endpoint = std::env::var("S3_ENDPOINT").expect("S3_ENDPOINT must be set");
-    let s3_bucket = std::env::var("S3_BUCKET").expect("S3_BUCKET must be set");
-    let s3_access_key = std::env::var("S3_ACCESS_KEY").expect("S3_ACCESS_KEY must be set");
-    let s3_secret_key = std::env::var("S3_SECRET_KEY").expect("S3_SECRET_KEY must be set");
-    let s3_region = std::env::var("S3_REGION").expect("S3_REGION must be set");
+    let s3_endpoint = std::env::var("S3_ENDPOINT").context("S3_ENDPOINT must be set")?;
+    let s3_bucket = std::env::var("S3_BUCKET").context("S3_BUCKET must be set")?;
+    let s3_access_key = std::env::var("S3_ACCESS_KEY").context("S3_ACCESS_KEY must be set")?;
+    let s3_secret_key = std::env::var("S3_SECRET_KEY").context("S3_SECRET_KEY must be set")?;
+    let s3_region = std::env::var("S3_REGION").context("S3_REGION must be set")?;
 
     // Redis Config
-    let redis_url = std::env::var("REDIS_URL").expect("REDIS_URL must be set");
+    let redis_url = std::env::var("REDIS_URL").context("REDIS_URL must be set")?;
 
     // Initialize database
     let db = Database::new(&database_url).await?;
@@ -63,7 +64,7 @@ async fn main() -> anyhow::Result<()> {
     let redis_service = Arc::new(RedisService::new(&redis_url).await?); // Note: Redis service not fully used yet but initialized
     
     // Initialize Blockchain Service
-    let rpc_url = std::env::var("RPC_URL").expect("RPC_URL must be set");
+    let rpc_url = std::env::var("RPC_URL").context("RPC_URL must be set")?;
     let blockchain_service = Arc::new(EvmBlockchainService::new(&rpc_url)?);
 
     // Initialize background jobs

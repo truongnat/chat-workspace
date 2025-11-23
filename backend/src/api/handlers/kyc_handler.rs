@@ -3,6 +3,7 @@ use axum::{
     http::StatusCode,
     Json,
     response::IntoResponse,
+    Extension,
 };
 use std::sync::Arc;
 use uuid::Uuid;
@@ -15,19 +16,16 @@ use crate::application::{
     GetUploadUrl, SubmitKyc, ReviewKyc,
 };
 use crate::api::handlers::{AppError, AppState};
-
-// TODO: Extract user ID from JWT middleware
-// For now, we'll assume a mock user ID or pass it in headers for testing
-// In a real app, use axum::extract::Extension or a custom extractor
+use crate::api::middleware::auth_middleware::CurrentUser;
 
 pub async fn get_upload_url(
     State(state): State<Arc<AppState>>,
+    Extension(current_user): Extension<CurrentUser>,
     Json(payload): Json<GetUploadUrlRequest>,
 ) -> Result<Json<UploadUrlResponse>, AppError> {
     payload.validate()?;
     
-    // Mock user ID for now - replace with actual auth
-    let user_id = Uuid::new_v4(); 
+    let user_id = current_user.id;
 
     let (upload_url, file_url) = state
         .get_upload_url
@@ -42,12 +40,12 @@ pub async fn get_upload_url(
 
 pub async fn submit_kyc(
     State(state): State<Arc<AppState>>,
+    Extension(current_user): Extension<CurrentUser>,
     Json(payload): Json<SubmitKycRequest>,
 ) -> Result<Json<KycResponse>, AppError> {
     payload.validate()?;
 
-    // Mock user ID for now
-    let user_id = Uuid::new_v4();
+    let user_id = current_user.id;
 
     let request = state
         .submit_kyc
@@ -68,11 +66,11 @@ pub async fn submit_kyc(
 
 pub async fn review_kyc(
     State(state): State<Arc<AppState>>,
+    Extension(current_user): Extension<CurrentUser>,
     Path(request_id): Path<Uuid>,
     Json(payload): Json<ReviewKycRequest>,
 ) -> Result<Json<KycResponse>, AppError> {
-    // Mock admin ID
-    let admin_id = Uuid::new_v4();
+    let admin_id = current_user.id;
 
     let request = state
         .review_kyc

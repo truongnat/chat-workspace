@@ -1,7 +1,8 @@
 use axum::{
-    extract::{State, Query},
+    extract::{State, Query, Extension},
     Json,
 };
+use crate::api::middleware::auth_middleware::CurrentUser;
 use std::sync::Arc;
 use uuid::Uuid;
 use validator::Validate;
@@ -12,17 +13,14 @@ use crate::application::{
 };
 use crate::api::handlers::{AppError, AppState};
 
-// TODO: Extract user ID from JWT
-// For now, mock user ID
-
 pub async fn update_location(
     State(state): State<Arc<AppState>>,
+    Extension(current_user): Extension<CurrentUser>,
     Json(payload): Json<UpdateLocationRequest>,
 ) -> Result<Json<()>, AppError> {
     payload.validate()?;
     
-    // Mock user ID
-    let user_id = Uuid::new_v4();
+    let user_id = current_user.id;
 
     state
         .update_location
