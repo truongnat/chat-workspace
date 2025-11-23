@@ -1,0 +1,20 @@
+# Flutter build stage
+FROM ghcr.io/cirruslabs/flutter:stable AS builder
+
+WORKDIR /app
+
+# Copy pubspec file
+COPY pubspec.yaml ./
+
+# Get dependencies
+RUN flutter pub get
+
+# Copy source code
+COPY . .
+
+# Build web
+RUN flutter build web --release
+
+# Output stage (just holds the build artifacts)
+FROM scratch AS export
+COPY --from=builder /app/build/web /

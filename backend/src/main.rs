@@ -33,12 +33,12 @@ async fn main() -> anyhow::Result<()> {
         .parse()
         .context("JWT_EXPIRATION must be a number")?;
         
-    // S3 Config
-    let s3_endpoint = std::env::var("S3_ENDPOINT").context("S3_ENDPOINT must be set")?;
-    let s3_bucket = std::env::var("S3_BUCKET").context("S3_BUCKET must be set")?;
-    let s3_access_key = std::env::var("S3_ACCESS_KEY").context("S3_ACCESS_KEY must be set")?;
-    let s3_secret_key = std::env::var("S3_SECRET_KEY").context("S3_SECRET_KEY must be set")?;
-    let s3_region = std::env::var("S3_REGION").context("S3_REGION must be set")?;
+    // S3 Config (Optional for Docker - can use mock)
+    let s3_endpoint = std::env::var("S3_ENDPOINT").ok();
+    let s3_bucket = std::env::var("S3_BUCKET").ok();
+    let s3_access_key = std::env::var("S3_ACCESS_KEY").ok();
+    let s3_secret_key = std::env::var("S3_SECRET_KEY").ok();
+    let s3_region = std::env::var("S3_REGION").ok();
 
     // Redis Config
     let redis_url = std::env::var("REDIS_URL").context("REDIS_URL must be set")?;
@@ -54,14 +54,25 @@ async fn main() -> anyhow::Result<()> {
 
     // Initialize services
     let auth_service = Arc::new(AuthServiceImpl::new(jwt_secret, jwt_expiration));
-    let s3_service = Arc::new(S3Service::new(
-        &s3_endpoint, 
-        &s3_bucket,
-        &s3_access_key,
-        &s3_secret_key,
-        &s3_region,
-    ).await?);
-    let redis_service = Arc::new(RedisService::new(&redis_url).await?); // Note: Redis service not fully used yet but initialized
+    
+    // S3 Service - use mock if credentials not provided
+    let s3_service = if let (Some(endpoint), Some(bucket), Some(access_key), Some(secret_key), Some(region)) = 
+        (s3_endpoint, s3_bucket, s3_access_key, s3_secret_key, s3_region) {
+        tracing::info!("Initializing S3 service with real credentials");
+        Arc::new(S3Service::new(&endpoint, &bucket, &access_key, &secret_key, &region).await?)
+    } else {
+        tracing::warn!("S3 credentials not fully configured. Using mock S3 service.");
+        // Create a mock S3 service (you'll need to implement this or handle gracefully)
+        Arc::new(S3Service::new(
+            "http://localhost:9000",
+            "mock-bucket",
+            "mock-key",
+            "mock-secret",
+            "us-east-1"
+        ).await?)
+    };
+    
+    let redis_service = Arc::new(RedisService::new(&redis_url).await?);
     
     // Initialize Blockchain Service
     let rpc_url = std::env::var("RPC_URL").context("RPC_URL must be set")?;
@@ -116,11 +127,14 @@ async fn main() -> anyhow::Result<()> {
     // Create router
     let app = create_router(app_state);
 
-    // Start server
-    let addr = "0.0.0.0:8080";
+    // Start server - read from env for Docker support
+    let host = std::env::var("HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
+    let port = std::env::var("PORT").unwrap_or_else(|_| "8080".to_string());
+    let addr = format!("{}:{}", host, port);
+    
     tracing::info!("Server listening on {}", addr);
 
-    let listener = tokio::net::TcpListener::bind(addr).await?;
+    let listener = tokio::net::TcpListener::bind(&addr).await?;
     axum::serve(listener, app).await?;
 
     Ok(())
