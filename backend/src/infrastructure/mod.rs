@@ -6,6 +6,6 @@ pub mod cron;
 
 pub use db::Database;
 pub use repositories::{PostgresUserRepository, PostgresKycRepository, PostgresMessageRepository};
-pub use services::AuthServiceImpl;
+pub use services::{AuthServiceImpl, BlockchainService, EvmBlockchainService};
 pub use external::{S3Service, RedisService, FcmService};
 pub use cron::MessageCleanupJob;

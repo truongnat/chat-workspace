@@ -108,6 +108,12 @@ class SettingsScreen extends StatelessWidget {
             icon: LucideIcons.bell,
             onTap: () {},
           ),
+          SettingsTile(
+            title: 'Wallet',
+            subtitle: 'Manage crypto assets',
+            icon: LucideIcons.wallet,
+            onTap: () => context.push('/settings/wallet'),
+          ),
 
           const SizedBox(height: 24),
 

@@ -12,6 +12,7 @@ import '../features/settings/screens/privacy_settings_screen.dart';
 import '../features/settings/screens/security_settings_screen.dart';
 import '../features/settings/screens/premium_screen.dart';
 import '../features/settings/screens/account_details_screen.dart';
+import '../features/wallet/presentation/screens/wallet_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -66,6 +67,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings/account',
         builder: (context, state) => const AccountDetailsScreen(),
+      ),
+      GoRoute(
+        path: '/settings/wallet',
+        builder: (context, state) => const WalletScreen(),
       ),
     ],
   );
