@@ -1,13 +1,20 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/auth_state_provider.dart';
 
 class ApiClient {
   static final ApiClient _instance = ApiClient._internal();
   late final Dio dio;
   final _storage = const FlutterSecureStorage();
+  WidgetRef? _ref;
 
   factory ApiClient() {
     return _instance;
+  }
+
+  void setRef(WidgetRef ref) {
+    _ref = ref;
   }
 
   ApiClient._internal() {
@@ -35,9 +42,10 @@ class ApiClient {
         },
         onError: (DioException e, handler) async {
           if (e.response?.statusCode == 401) {
-            // Trigger Logout Event (TODO: Implement Event Bus or similar)
+            // Trigger Logout Event
             print('Unauthorized: Triggering Logout');
             await _storage.delete(key: 'auth_token');
+            _ref?.read(authStateProvider.notifier).logout();
           }
           return handler.next(e);
         },

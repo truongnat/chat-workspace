@@ -5,6 +5,7 @@ import 'core/theme/app_theme.dart';
 import 'router/app_router.dart';
 import 'features/auth/presentation/providers/auth_providers.dart';
 import 'features/settings/presentation/providers/theme_providers.dart';
+import 'core/network/api_client.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,6 +31,9 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Initialize ApiClient with ref for logout events
+    ApiClient().setRef(ref);
+    
     final router = ref.watch(routerProvider);
     final currentTheme = ref.watch(currentThemeProvider);
 

@@ -6,9 +6,11 @@ import '../../domain/usecases/get_chats.dart';
 import '../../domain/usecases/get_messages.dart';
 import '../../domain/usecases/send_message.dart';
 
+import '../../../../core/network/api_client.dart';
+
 // Data Sources
 final chatRemoteDataSourceProvider = Provider<ChatRemoteDataSource>((ref) {
-  return ChatRemoteDataSourceImpl();
+  return ChatRemoteDataSourceImpl(apiClient: ApiClient());
 });
 
 // Repository

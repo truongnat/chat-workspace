@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:bip39/bip39.dart' as bip39;
+import 'package:crypto/crypto.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:web3dart/web3dart.dart';
 
@@ -13,6 +15,7 @@ class WalletRepositoryImpl implements WalletRepository {
   static const String _privateKeyKey = 'wallet_private_key';
   static const String _mnemonicKey = 'wallet_mnemonic';
   static const String _addressKey = 'wallet_address';
+  static const String _pinKey = 'wallet_pin_hash';
 
   WalletRepositoryImpl({
     required FlutterSecureStorage secureStorage,
@@ -101,5 +104,30 @@ class WalletRepositoryImpl implements WalletRepository {
   @override
   Future<String?> getPrivateKey() async {
     return await _secureStorage.read(key: _privateKeyKey);
+  }
+
+  @override
+  Future<bool> verifyPin(String pin) async {
+    final storedHash = await _secureStorage.read(key: _pinKey);
+    if (storedHash == null) return false; // No PIN set
+
+    final bytes = utf8.encode(pin);
+    final hash = sha256.convert(bytes);
+    return storedHash == hash.toString();
+  }
+
+  @override
+  Future<void> setPin(String pin) async {
+    final bytes = utf8.encode(pin);
+    final hash = sha256.convert(bytes);
+    await _secureStorage.write(key: _pinKey, value: hash.toString());
+  }
+
+  @override
+  Future<String> sendTransaction(String to, double amount) async {
+    final privateKeyHex = await getPrivateKey();
+    if (privateKeyHex == null) throw Exception('No wallet found');
+    
+    return await _remoteDataSource.sendTransaction(privateKeyHex, to, amount);
   }
 }

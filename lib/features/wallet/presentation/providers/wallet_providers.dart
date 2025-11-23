@@ -63,4 +63,16 @@ class WalletController extends StateNotifier<AsyncValue<WalletEntity?>> {
   Future<String?> getMnemonic() async {
     return await _repository.getMnemonic();
   }
+
+  Future<bool> verifyPin(String pin) async {
+    return await _repository.verifyPin(pin);
+  }
+
+  Future<void> setPin(String pin) async {
+    await _repository.setPin(pin);
+  }
+
+  Future<String> sendTransaction(String to, double amount) async {
+    return await _repository.sendTransaction(to, amount);
+  }
 }

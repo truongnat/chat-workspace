@@ -43,3 +43,38 @@ final createProfileUseCaseProvider = Provider<CreateProfile>((ref) {
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError('SharedPreferences must be overridden in main.dart');
 });
+
+// Controller
+final authControllerProvider = StateNotifierProvider<AuthController, AsyncValue<void>>((ref) {
+  return AuthController(
+    sendOtpUseCase: ref.watch(sendOtpUseCaseProvider),
+    verifyOtpUseCase: ref.watch(verifyOtpUseCaseProvider),
+    createProfileUseCase: ref.watch(createProfileUseCaseProvider),
+  );
+});
+
+class AuthController extends StateNotifier<AsyncValue<void>> {
+  final SendOtp _sendOtpUseCase;
+  final VerifyOtp _verifyOtpUseCase;
+  final CreateProfile _createProfileUseCase;
+
+  AuthController({
+    required SendOtp sendOtpUseCase,
+    required VerifyOtp verifyOtpUseCase,
+    required CreateProfile createProfileUseCase,
+  })  : _sendOtpUseCase = sendOtpUseCase,
+        _verifyOtpUseCase = verifyOtpUseCase,
+        _createProfileUseCase = createProfileUseCase,
+        super(const AsyncValue.data(null));
+
+  Future<void> sendOtp(String phoneNumber) async {
+    state = const AsyncValue.loading();
+    final result = await _sendOtpUseCase(phoneNumber);
+    state = result.fold(
+      (failure) => AsyncValue.error(failure, StackTrace.current),
+      (_) => const AsyncValue.data(null),
+    );
+  }
+
+  // Add other methods as needed
+}

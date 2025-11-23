@@ -8,6 +8,7 @@ abstract class AuthRemoteDataSource {
   Future<Map<String, dynamic>> register(String phone, String password, String name);
   Future<void> uploadPublicKey(String publicKey);
   Future<String?> getPublicKey(String userId);
+  Future<Map<String, dynamic>> getCurrentUser();
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -85,6 +86,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     } on DioException catch (e) {
       // If 404, maybe user hasn't uploaded key yet
       if (e.response?.statusCode == 404) return null;
+      throw _handleError(e);
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> getCurrentUser() async {
+    try {
+      final response = await apiClient.dio.get('/auth/me');
+      return response.data;
+    } on DioException catch (e) {
       throw _handleError(e);
     }
   }

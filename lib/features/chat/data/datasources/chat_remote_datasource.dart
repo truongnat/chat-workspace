@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+import '../../../../core/network/api_client.dart';
 import '../models/chat_model.dart';
 import '../models/message_model.dart';
 import '../../domain/entities/message.dart';
@@ -20,77 +22,40 @@ abstract class ChatRemoteDataSource {
 }
 
 class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
+  final ApiClient apiClient;
+
+  ChatRemoteDataSourceImpl({required this.apiClient});
+
   @override
   Future<List<ChatModel>> getChats() async {
-    // Simulate API call
-    await Future.delayed(const Duration(milliseconds: 500));
-    // Mock data
-    return [
-      ChatModel(
-        id: 'chat_1',
-        name: 'Alice Johnson',
-        isOnline: true,
-        unreadCount: 2,
-        lastMessage: MessageModel(
-          id: 'msg_1',
-          chatId: 'chat_1',
-          senderId: 'user_2',
-          content: 'Hey! How are you?',
-          timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
-          isSent: false,
-        ),
-      ),
-      ChatModel(
-        id: 'chat_2',
-        name: 'Bob Smith',
-        isOnline: false,
-        unreadCount: 0,
-        lastSeen: DateTime.now().subtract(const Duration(hours: 2)),
-        lastMessage: MessageModel(
-          id: 'msg_2',
-          chatId: 'chat_2',
-          senderId: 'user_1',
-          content: 'See you tomorrow!',
-          timestamp: DateTime.now().subtract(const Duration(hours: 3)),
-          isSent: true,
-          isRead: true,
-        ),
-      ),
-    ];
+    try {
+      final response = await apiClient.dio.get('/chats');
+      final List<dynamic> data = response.data['chats'] ?? [];
+      return data.map((json) => ChatModel.fromJson(json)).toList();
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
   }
 
   @override
   Future<ChatModel> getChatById(String chatId) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    return ChatModel(
-      id: chatId,
-      name: 'Alice Johnson',
-      isOnline: true,
-    );
+    try {
+      final response = await apiClient.dio.get('/chats/$chatId');
+      return ChatModel.fromJson(response.data);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
   }
 
   @override
   Future<List<MessageModel>> getMessages(String chatId) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    return [
-      MessageModel(
-        id: 'msg_1',
-        chatId: chatId,
-        senderId: 'user_2',
-        content: 'Hey! How are you?',
-        timestamp: DateTime.now().subtract(const Duration(minutes: 10)),
-        isSent: false,
-      ),
-      MessageModel(
-        id: 'msg_2',
-        chatId: chatId,
-        senderId: 'user_1',
-        content: 'I\'m good! Thanks for asking.',
-        timestamp: DateTime.now().subtract(const Duration(minutes: 8)),
-        isSent: true,
-        isRead: true,
-      ),
-    ];
+    try {
+      final response = await apiClient.dio.get('/chats/$chatId/messages');
+      final List<dynamic> data = response.data['messages'] ?? [];
+      return data.map((json) => MessageModel.fromJson(json)).toList();
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
   }
 
   @override
@@ -102,33 +67,59 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
     bool isDissolving = false,
     Duration? dissolveDuration,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    return MessageModel(
-      id: 'msg_${DateTime.now().millisecondsSinceEpoch}',
-      chatId: chatId,
-      senderId: 'user_1',
-      content: content,
-      timestamp: DateTime.now(),
-      isSent: true,
-      type: type,
-      replyToId: replyToId,
-      isDissolving: isDissolving,
-      dissolveDuration: dissolveDuration,
-    );
+    try {
+      final response = await apiClient.dio.post(
+        '/chats/$chatId/messages',
+        data: {
+          'content': content,
+          'type': type.toString().split('.').last,
+          'reply_to_id': replyToId,
+          'is_dissolving': isDissolving,
+          'dissolve_duration': dissolveDuration?.inSeconds,
+        },
+      );
+      return MessageModel.fromJson(response.data);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
   }
 
   @override
   Future<void> markAsRead(String chatId, String messageId) async {
-    await Future.delayed(const Duration(milliseconds: 200));
+    try {
+      await apiClient.dio.post('/chats/$chatId/messages/$messageId/read');
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
   }
 
   @override
   Future<void> addReaction(String messageId, String reaction) async {
-    await Future.delayed(const Duration(milliseconds: 200));
+    try {
+      await apiClient.dio.post(
+        '/messages/$messageId/reactions',
+        data: {'reaction': reaction},
+      );
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
   }
 
   @override
   Future<void> deleteMessage(String messageId) async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    try {
+      await apiClient.dio.delete('/messages/$messageId');
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Exception _handleError(DioException e) {
+    if (e.response != null) {
+      final message = e.response?.data['error'] ?? 'Server Error';
+      return Exception(message);
+    } else {
+      return Exception('Network Error');
+    }
   }
 }

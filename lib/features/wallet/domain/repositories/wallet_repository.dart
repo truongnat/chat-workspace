@@ -20,4 +20,13 @@ abstract class WalletRepository {
   /// Retrieves the mnemonic phrase securely.
   /// WARNING: Use with caution. Should be protected by biometric/PIN in UI.
   Future<String?> getMnemonic();
+
+  /// Verifies the user's PIN.
+  Future<bool> verifyPin(String pin);
+
+  /// Sets the user's PIN.
+  Future<void> setPin(String pin);
+
+  /// Sends a transaction to the specified address.
+  Future<String> sendTransaction(String to, double amount);
 }
