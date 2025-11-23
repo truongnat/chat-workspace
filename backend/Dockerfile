@@ -1,9 +1,9 @@
-# Build stage
-FROM rust:1.75 as builder
+# Build stage - Use Rust 1.83 (latest stable)
+FROM rust:1.83 as builder
 
 WORKDIR /app
 
-# Copy manifests
+# Copy manifests AND Cargo.lock
 COPY Cargo.toml Cargo.lock ./
 
 # Copy source code
@@ -26,7 +26,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copy the binary from builder
-COPY --from=builder /app/target/release/backend /app/backend
+COPY --from=builder /app/target/release/secure-chat-backend /app/backend
 
 # Expose port
 EXPOSE 3000
