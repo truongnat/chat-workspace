@@ -15,19 +15,21 @@ The backend is fully implemented, following Clean Architecture principles.
 - **Phase 6: Geo-location**: Nearby user discovery using PostGIS spatial queries.
 - **Phase 7: Jobs**: Background message cleanup (self-destruct).
 - **Phase 8: Subscriptions**: Premium tier management.
-- **Phase 9: Hardening**: OTP verification, production readiness (In Progress).
-- **Phase 10: E2EE**: Public key storage and exchange endpoints (Complete).
-- **Phase 11: Web3**: Non-custodial wallet & Blockchain integration (Complete).
+- **Phase 9: Hardening**: OTP verification, production readiness.
+- **Phase 10: E2EE**: Public key storage and exchange endpoints.
+- **Phase 11: Web3**: Non-custodial wallet & Blockchain integration.
 
-### Frontend (Flutter) - **IN PROGRESS** 🚧
-Integration with the backend is well underway, with core security features implemented.
+### Frontend (Flutter) - **COMPLETE** ✅
+The frontend is fully implemented with production-ready features.
 
-- **Networking**: `ApiClient` with Dio interceptors for Auth.
+- **Networking**: `ApiClient` with Dio interceptors for Auth and automatic logout on 401.
 - **Real-time**: `WebSocketService` implementing the strict JSON protocol.
-- **Auth**: Remote data sources and repositories for Login/Register.
+- **Auth**: Complete flow (Login, Register, OTP, getCurrentUser) with JWT token management.
 - **Security**: **End-to-End Encryption (E2EE)** using `sodium_libs` (X25519 + XSalsa20-Poly1305).
-- **Web3**: Non-custodial wallet (BIP39), Balance checking, and Settings integration.
-- **UI**: Comprehensive UI library and screens implemented (Auth, Chat, Video Call, Settings, Wallet).
+- **Web3**: Non-custodial wallet with BIP39 mnemonic, PIN protection (SHA256), Send/Receive ETH, QR codes.
+- **Chat**: Full API integration (getChats, sendMessage, reactions, delete) - no mock data.
+- **State Management**: Riverpod with Clean Architecture (Domain → Data → Presentation).
+- **UI**: Comprehensive screens (Auth, Chat, Video Call, Settings, Wallet) with optimized widgets.
 
 ## 🛠️ Tech Stack
 
@@ -44,7 +46,7 @@ Integration with the backend is well underway, with core security features imple
 - **State Management**: Riverpod
 - **Networking**: Dio, WebSocketChannel
 - **Cryptography**: Libsodium (`sodium_libs`)
-- **Web3**: Web3Dart, Bip39
+- **Web3**: Web3Dart, Bip39, Crypto
 - **Local Storage**: Flutter Secure Storage
 
 ## 🏃‍♂️ Getting Started
@@ -71,11 +73,13 @@ WebSocket messages follow a strict JSON format:
 ```
 **Events**: `SendMessage`, `WebRtcSignal`, `SystemEvent`.
 
-## � Security Architecture
+## 🔒 Security Architecture
 - **End-to-End Encryption**: Messages are encrypted on the device using **X25519** for key exchange and **XSalsa20-Poly1305** for encryption. The backend only stores encrypted blobs and public keys.
 - **Secure Storage**: Private keys and auth tokens are stored in the device's secure enclave (Keychain/Keystore) via `flutter_secure_storage`.
 - **Zero Knowledge**: The server cannot decrypt user messages.
-- **Non-Custodial Wallet**: Private keys are generated on-device and never leave the user's phone. The backend only performs signature verification for access control.
+- **Non-Custodial Wallet**: Private keys are generated on-device (BIP39 mnemonic) and never leave the user's phone. PIN protection uses SHA256 hashing.
+- **Auth Security**: JWT tokens with automatic logout on 401. Global auth state management via Riverpod.
+- **Input Validation**: Phone numbers, Ethereum addresses, and amounts validated before API calls.
 
-## �📄 License
+## 📄 License
 Proprietary.
