@@ -51,17 +51,61 @@ The frontend is fully implemented with production-ready features.
 
 ## 🏃‍♂️ Getting Started
 
-### Backend
-1. Navigate to `backend/`.
-2. Copy `.env.example` to `.env` and fill in secrets.
-3. Run `cargo run`.
-   - Server listens on `0.0.0.0:8080`.
+### Option 1: Docker Compose (Recommended for Testing) 🐳
 
-### Frontend
+The easiest way to run the entire stack:
+
+```bash
+# Start all services (Backend, Frontend, Database, Redis, Nginx)
+docker-compose up --build
+
+# Access the app
+# Web App: http://localhost:8080
+# API: http://localhost:8080/api/*
+# WebSocket: ws://localhost:8080/ws
+```
+
+**What's included:**
+- ✅ PostgreSQL with PostGIS
+- ✅ Redis for pub/sub
+- ✅ Rust backend (auto-configured)
+- ✅ Flutter web build
+- ✅ Nginx reverse proxy (handles CORS)
+
+**Configuration:**
+- Backend uses `backend/.env` (already configured for Docker)
+- All services communicate via Docker network
+- No manual setup required!
+
+See [DOCKER.md](DOCKER.md) for detailed instructions.
+
+---
+
+### Option 2: Local Development
+
+#### Backend
+1. Navigate to `backend/`.
+2. Copy `.env.example` to `.env` and configure:
+   ```bash
+   DATABASE_URL=postgresql://user:pass@localhost:5432/chat_db
+   REDIS_URL=redis://localhost:6379
+   JWT_SECRET=your-secret-key
+   ```
+3. Start dependencies:
+   ```bash
+   docker-compose up -d db redis
+   ```
+4. Run backend:
+   ```bash
+   cargo run
+   ```
+   - Server listens on `0.0.0.0:8080` (configurable via `PORT` env var).
+
+#### Frontend
 1. Navigate to root (Flutter project).
 2. Run `flutter pub get`.
-3. Run `flutter run`.
-   - Connects to backend at `10.0.2.2:8080` (Android) or `localhost:8080` (iOS).
+3. Run `flutter run` (mobile) or `flutter run -d chrome` (web).
+   - Connects to backend at `10.0.2.2:8080` (Android) or `localhost:8080` (iOS/Web).
 
 ## 📡 Real-time Protocol
 WebSocket messages follow a strict JSON format:
@@ -80,6 +124,21 @@ WebSocket messages follow a strict JSON format:
 - **Non-Custodial Wallet**: Private keys are generated on-device (BIP39 mnemonic) and never leave the user's phone. PIN protection uses SHA256 hashing.
 - **Auth Security**: JWT tokens with automatic logout on 401. Global auth state management via Riverpod.
 - **Input Validation**: Phone numbers, Ethereum addresses, and amounts validated before API calls.
+
+## 🚀 Deployment
+
+### Docker Production
+1. Update `docker-compose.yml` with production credentials
+2. Set strong `JWT_SECRET`
+3. Configure real S3, FCM, and Twilio credentials
+4. Enable HTTPS in Nginx
+5. Deploy to your cloud provider
+
+### Environment Variables
+All services support configuration via environment variables. See:
+- `backend/.env.example` for backend config
+- `docker-compose.yml` for Docker setup
+- `DOCKER.md` for detailed deployment guide
 
 ## 📄 License
 Proprietary.
